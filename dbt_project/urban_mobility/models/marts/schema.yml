@@ -1,0 +1,134 @@
+version: 2
+
+models:
+  - name: dim_location
+    description: "NYC TLC taxi zone reference — 263 zones mapped to boroughs and service areas"
+    columns:
+      - name: location_id
+        tests:
+          - not_null
+          - unique
+      - name: borough
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - Manhattan
+                - Queens
+                - Brooklyn
+                - Bronx
+                - Staten Island
+                - EWR
+                - Unknown
+                - N/A
+      - name: zone_name
+        tests:
+          - not_null
+      - name: demand_category
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - high_demand
+                - medium_demand
+                - airport
+                - unassigned
+                - other
+
+  - name: dim_time
+    description: "Hour-grain time dimension covering November 2025 to January 2026"
+    columns:
+      - name: datetime_hour
+        tests:
+          - not_null
+          - unique
+      - name: time_of_day
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - morning_peak
+                - evening_peak
+                - late_night
+                - mid_night
+                - off_peak
+      - name: is_weekend
+        tests:
+          - not_null
+      - name: is_holiday_period
+        tests:
+          - not_null
+
+  - name: dim_weather_conditions
+    description: "Hourly weather conditions with impact scoring for NYC Nov 2025 - Jan 2026"
+    columns:
+      - name: weather_datetime
+        tests:
+          - not_null
+          - unique
+      - name: weather_severity
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - clear
+                - light_rain
+                - heavy_rain
+                - light_snow
+                - heavy_snow
+                - extreme_cold
+                - extreme_heat
+                - warm
+      - name: weather_impact_score
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]
+              quote: false
+      - name: precipitation_type
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - snow_and_rain
+                - snow_only
+                - rain_only
+                - dry
+
+  - name: fact_trips
+    description: >
+      Central fact table — one row per taxi trip enriched with weather,
+      subway disruption context, and dimension foreign keys.
+      Covers November 2025 to January 2026 festive and winter period.
+    columns:
+      - name: trip_id
+        tests:
+          - not_null
+          - unique
+      - name: pickup_datetime
+        tests:
+          - not_null
+      - name: pickup_location_id
+        tests:
+          - not_null
+      - name: dropoff_location_id
+        tests:
+          - not_null
+      - name: pickup_borough
+        tests:
+          - not_null
+      - name: fare_amount
+        tests:
+          - not_null
+      - name: total_amount
+        tests:
+          - not_null
+      - name: trip_duration_minutes
+        tests:
+          - not_null
+      - name: has_subway_disruption
+        tests:
+          - not_null
+      - name: weather_severity
+        tests:
+          - not_null

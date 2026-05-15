@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: int_yellow_taxi_weather
+    description: "Taxi trips joined to hourly weather conditions at pickup time"
+    columns:
+      - name: pickup_datetime
+        tests:
+          - not_null
+      - name: pickup_location_id
+        tests:
+          - not_null
+      - name: weather_severity
+        tests:
+          - accepted_values:
+              values:
+                - clear
+                - light_rain
+                - heavy_rain
+                - light_snow
+                - heavy_snow
+                - extreme_cold
+                - extreme_heat
+                - warm
+
+  - name: int_yellow_taxi_metrics
+    description: "Enriched trips with analytical buckets, performance flags and derived metrics"
+    columns:
+      - name: trip_duration_bucket
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['short', 'medium', 'long', 'very_long']
+      - name: trip_distance_bucket
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['under_1_mile', '1_to_5_miles', '6_to_20_miles', '21_to_50_miles', '51_to_100_miles', 'over_100_miles']
+      - name: time_of_day
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['early_morning', 'late_morning', 'afternoon_peak', 'evening_peak', 'late_night', 'mid_night', 'off_peak']
+      - name: is_peak_hour
+        tests:
+          - not_null
+      - name: tip_percentage
+        tests:
+          - not_null
+      - name: avg_speed_mph
+        tests:
+          - not_null
+
+  - name: int_demand_zone_hour
+    description: "Trip demand pre-aggregated by pickup zone, date and hour for fast dashboard queries"
+    columns:
+      - name: pickup_date
+        tests:
+          - not_null
+      - name: pickup_hour
+        tests:
+          - not_null
+      - name: pickup_location_id
+        tests:
+          - not_null
+      - name: trip_count
+        tests:
+          - not_null
+      - name: total_fare_revenue
+        tests:
+          - not_null
+
+  - name: int_subway_taxi_impact
+    description: "Zone-hour taxi demand joined to subway disruption events"
+    columns:
+      - name: pickup_date
+        tests:
+          - not_null
+      - name: pickup_location_id
+        tests:
+          - not_null
+      - name: has_subway_disruption
+        tests:
+          - not_null
+      - name: is_compound_disruption
+        tests:
+          - not_null

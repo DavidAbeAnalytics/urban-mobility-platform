@@ -1,0 +1,42 @@
+# URBAN MOBILITY DATA PLATFORM — Git Ignore Rules
+
+# --- Virtual Environment ---
+urban_env/
+__pycache__/
+*.pyc
+*.pyo
+
+
+# --- Secrets (never commit) ---
+# .env contains project IDs, API URLs, and credential paths
+.env
+
+# JSON key files contain GCP service account private key
+*.json
+mobility-pipeline-sa/
+
+
+# --- dbt Generated Files ---
+# These are built automatically — no need to track them
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+
+
+# --- Downloaded Raw Data ---
+ingestion/raw_downloads/*.parquet
+ingestion/raw_downloads/*.csv
+
+
+# --- Logs ---
+logs/
+*.log
+
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+
+
+# --- IDE Files ---
+.vscode/settings.json

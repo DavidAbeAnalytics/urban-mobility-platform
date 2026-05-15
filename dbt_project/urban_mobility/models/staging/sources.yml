@@ -1,0 +1,79 @@
+version: 2
+
+sources:
+  - name: raw
+    database: urban-mobility-platform
+    schema: raw
+    description: "Raw data ingested from GCS - exact copies of source data, never modified"
+
+    freshness:
+      warn_after: {count: 7, period: day}
+      error_after: {count: 30, period: day}
+
+    tables:
+      - name: yellow_taxi_raw
+        description: "NYC TLC Yellow Taxi trip records - November 2025 to January 2026"
+        loaded_at_field: tpep_pickup_datetime
+
+        columns:
+          - name: VendorID
+            description: "Taxi vendor - 1=Creative Mobile Technologies, 2=VeriFone"
+          - name: tpep_pickup_datetime
+            description: "Trip pickup timestamp"
+            tests:
+              - not_null
+          - name: tpep_dropoff_datetime
+            description: "Trip dropoff timestamp"
+            tests:
+              - not_null
+          - name: PULocationID
+            description: "TLC taxi zone ID where trip started"
+            tests:
+              - not_null
+          - name: DOLocationID
+            description: "TLC taxi zone ID where trip ended"
+            tests:
+              - not_null
+          - name: fare_amount
+            description: "Base fare calculated by meter"
+          - name: total_amount
+            description: "Total amount charged to passenger"
+          - name: trip_distance
+            description: "Trip distance in miles"
+
+      - name: weather_raw
+        description: "Hourly NYC weather from Open-Meteo archive API"
+
+        columns:
+          - name: datetime_hour
+            description: "Hour timestamp for weather observation"
+            tests:
+              - not_null
+              - unique
+          - name: temperature_2m
+            description: "Air temperature at 2m height in Celsius"
+          - name: precipitation
+            description: "Total precipitation in mm"
+          - name: snowfall
+            description: "Snowfall in cm"
+          - name: weathercode
+            description: "WMO weather interpretation code"
+
+      - name: mta_alerts_raw
+        description: "MTA subway service alerts - synthetic data flagged with is_synthetic=true"
+
+        columns:
+          - name: alert_id
+            description: "Unique alert identifier"
+            tests:
+              - not_null
+          - name: subway_line
+            description: "Affected subway line"
+            tests:
+              - not_null
+          - name: cause
+            description: "Cause of service disruption"
+          - name: effect
+            description: "Effect on service"
+          - name: is_synthetic
+            description: "True if generated synthetically — see ADR-005"

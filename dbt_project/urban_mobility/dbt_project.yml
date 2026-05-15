@@ -1,0 +1,46 @@
+name: 'urban_mobility'
+version: '1.0.0'
+config-version: 2
+
+profile: 'urban_mobility'
+
+# Directory structure
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# ─────────────────────────────────────────────
+# Model configurations
+# This is where you define default behaviours
+# for each layer of your transformation pipeline
+# ─────────────────────────────────────────────
+models:
+  urban_mobility:
+
+    staging:
+      # Staging models write to BigQuery 'staging' dataset
+      # Views are used here — they cost nothing to store
+      # and always reflect the latest raw data
+      +materialized: view
+      +schema: staging
+
+    intermediate:
+      # Intermediate models are tables — they involve
+      # heavier calculations so we materialise them
+      # to avoid recomputing on every downstream query
+      +materialized: table
+      +schema: intermediate
+
+    marts:
+      # Marts are partitioned tables — the analyst-facing
+      # layer that Looker Studio and stakeholders query
+      +materialized: table
+      +schema: marts

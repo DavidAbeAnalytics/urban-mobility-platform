@@ -1,0 +1,97 @@
+version: 2
+
+models:
+  - name: stg_yellow_taxi
+    description: >
+      Cleaned and renamed NYC TLC yellow taxi trips.
+      Filters corrupt timestamps and invalid trips.
+      Covers November 2025 to January 2026 - festive and winter period.
+
+    columns:
+      - name: pickup_datetime
+        description: "Trip pickup timestamp"
+        tests:
+          - not_null
+
+      - name: dropoff_datetime
+        description: "Trip dropoff timestamp"
+        tests:
+          - not_null
+
+      - name: pickup_location_id
+        description: "TLC pickup zone ID (1-263)"
+        tests:
+          - not_null
+
+      - name: dropoff_location_id
+        description: "TLC dropoff zone ID (1-263)"
+        tests:
+          - not_null
+
+      - name: trip_duration_minutes
+        description: "Calculated trip duration in minutes"
+        tests:
+          - not_null
+
+      - name: fare_amount
+        description: "Base fare - must be positive after staging filter"
+        tests:
+          - not_null
+
+      - name: trip_distance_miles
+        description: "Trip distance - must be positive after staging filter"
+        tests:
+          - not_null
+
+
+  - name: stg_weather
+    description: >
+      Hourly NYC weather cleaned and classified.
+      Includes weather severity buckets for taxi demand correlation.
+
+    columns:
+      - name: weather_datetime
+        description: "Hourly weather observation timestamp"
+        tests:
+          - not_null
+          - unique
+
+      - name: weather_severity
+        description: "Weather severity classification bucket"
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - clear
+                - light_rain
+                - heavy_rain
+                - light_snow
+                - heavy_snow
+                - extreme_cold
+                - extreme_heat
+                - warm
+
+
+  - name: stg_mta_alerts
+    description: >
+      MTA subway service alerts with parsed timestamps and severity scores.
+      Synthetic data flagged with is_synthetic=true - see ADR-005.
+
+    columns:
+      - name: alert_id
+        description: "Unique alert identifier"
+        tests:
+          - not_null
+
+      - name: subway_line
+        description: "Affected subway line"
+        tests:
+          - not_null
+
+      - name: disruption_severity_score
+        description: "Severity score 0-5 based on effect type"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1, 2, 3, 4, 5]
+              quote: false
