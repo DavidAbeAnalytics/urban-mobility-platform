@@ -1,0 +1,61 @@
+name: dbt CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  dbt-test:
+    name: Run dbt Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dbt dependencies
+        run: |
+          pip install dbt-bigquery==1.9.0 dbt-core==1.9.0
+
+      - name: Set up GCP credentials
+        run: |
+          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > /tmp/gcp_key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_key.json" >> $GITHUB_ENV
+
+      - name: Set up dbt profiles
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << EOF
+          urban_mobility:
+            target: dev
+            outputs:
+              dev:
+                type: bigquery
+                method: service-account
+                project: urban-mobility-platform
+                dataset: staging
+                location: us-central1
+                threads: 4
+                keyfile: /tmp/gcp_key.json
+                job_execution_timeout_seconds: 300
+                job_retries: 1
+          EOF
+
+      - name: Install dbt packages
+        working-directory: dbt_project/urban_mobility
+        run: dbt deps
+
+      - name: Run dbt compile
+        working-directory: dbt_project/urban_mobility
+        run: dbt compile
+
+      - name: Run dbt test
+        working-directory: dbt_project/urban_mobility
+        run: dbt test
