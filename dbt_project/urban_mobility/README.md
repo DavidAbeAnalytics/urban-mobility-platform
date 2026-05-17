@@ -16,3 +16,8 @@ Try running the following commands:
 
 ## CI/CD
 This project uses GitHub Actions to run dbt tests automatically on every pull request.
+
+## CI/CD Pipeline
+This project uses GitHub Actions to automatically run dbt tests on every pull request.
+The workflow installs dbt, configures BigQuery credentials, and runs the full test suite
+before any code can merge to main.
