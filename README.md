@@ -1,5 +1,6 @@
 # Urban Mobility Data Platform
 ### Analysing How NYC Weather and Subway Disruptions Drive Taxi Demand
+
 #### Google Cloud · Python · dbt · BigQuery · Power BI · GitHub Actions
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
@@ -35,41 +36,10 @@ enabling meaningful demand pattern comparison within a single pipeline.
 
 ### Architecture
 
-![lineage](assets/02_dbt_lineage_graph.png) <br>
+![Architecture](assets/Architecture.png) <br>
 
-The platform implements a four-layer medallion architecture on Google Cloud. Each layer has a clearly defined contract; raw data is never modified, transformations happen exclusively in dbt, and the marts layer is the only layer that analysts and dashboards ever query directly. <br>
+The platform implements a four-layer medallion architecture on Google Cloud. Each layer has a clearly defined contract; raw data is never modified, transformations happen exclusively in dbt, and the marts layer is the only layer that analysts and dashboards ever query directly. 
 
-
-```text
-NYC TLC API          Open-Meteo API       MTA Subway Alerts
-     │                     │                      │
-     ▼                     ▼                      ▼
-┌─────────────────────────────────────────────────────┐
-│              GCS Data Lake (Raw Zone)               │
-│   raw/trips/   raw/weather/   raw/mta_alerts/       │
-│   year=/month= partitioned Hive structure           │
-└─────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────┐
-│              BigQuery Raw Dataset                   │
-│   yellow_taxi_raw   weather_raw   mta_alerts_raw   │
-└─────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────┐
-│              dbt Transformation Pipeline            │
-│                                                     │
-│  Staging → Intermediate → Marts                     │
-│  (views)    (tables)      (star schema)             │
-└─────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────┐
-│              Power BI Dashboard                     │
-│   NYC Transportation Intelligence Platform          │
-└─────────────────────────────────────────────────────┘
-```
 
 <br>
 <br>
@@ -108,7 +78,7 @@ Three sources were selected because they each answer a different dimension of th
 
 <br>
 
-**On the MTA data:** The MTA GTFS-RT endpoint returned a 403 Forbidden response without an API key, and historical backfill is not supported via the public endpoint. The pipeline falls back to reproducible synthetic alert data (`random.seed(42)`) flagged with `is_synthetic = TRUE`. All 135 records carry this flag, and the ADR log documents the production path for replacement. See [ADR-005](#architecture-decision-records).
+**On the MTA data:** The MTA GTFS-RT endpoint returned a 403 Forbidden response without an API key, and historical backfill is not supported via the public endpoint. The pipeline falls back to reproducible synthetic alert data (`random.seed(42)`) flagged with `is_synthetic = TRUE`. All 135 records carry this flag, and the ADR log documents the production path for replacement. See [ADR-005](docs/decisions.md).
 
 
 <br>
@@ -228,7 +198,7 @@ retry_policy = Retry(
 
 <br>
 
-This is the GCP-recommended approach for files over 5MB in production pipelines. See [ADR-006](#architecture-decision-records).
+This is the GCP-recommended approach for files over 5MB in production pipelines. See [ADR-006](docs/decisions.md).
 
 <br>
 <br>
@@ -254,7 +224,7 @@ Three raw tables mirror the GCS data lake exactly. Nothing is transformed at thi
 
 <BR>
 
-All datasets and the GCS bucket were co-located in `us-central1`. BigQuery load jobs from GCS are free within the same region; cross-region transfers would incur data egress charges that compound significantly at scale. See [ADR-007](#architecture-decision-records).
+All datasets and the GCS bucket were co-located in `us-central1`. BigQuery load jobs from GCS are free within the same region; cross-region transfers would incur data egress charges that compound significantly at scale. See [ADR-007](docs/decisions.md).
 
 <BR>
 <BR>
@@ -563,7 +533,7 @@ The Power BI dashboard connects directly to `fact_trips` and `int_subway_impact`
 
 #### Six headline metrics KPI
 
-[KPI](assets/11_kpi.png) <br>
+![KPI](assets/11_kpi.png) <br>
 
 Total Trips (11.11M), Total Revenue ($327.82M), Average Fare ($20.72), Average Speed (11.2 mph), Average Trip Duration (17.31 minutes) and Disruption Trips (1M). <br>
 
@@ -572,7 +542,7 @@ Total Trips (11.11M), Total Revenue ($327.82M), Average Fare ($20.72), Average S
 
 #### Hourly Trip Volume by Disruption Status
 
-[Hourly Trips](assets/12_Hourly_Trip_Volume_by_Disruption_Status%20.png) <br>
+![Hourly Trips](assets/12_Hourly_Trip_Volume_by_Disruption_Status.png) <br>
 
 A dual-line chart comparing total trips per hour between normal operations and subway disruption periods across the full 24-hour cycle. Both lines follow the same demand curve shape: declining through the
 early morning trough (hours 1 to 5), recovering through mid-morning, and peaking sharply at hour 18 where normal operations reach their highest point of the day before declining through the late evening. The disruption line mirrors this curve consistently but sits at roughly one-tenth the volume across every hour, reflecting the sparse distribution of synthetic MTA alert data. <br>
@@ -590,7 +560,7 @@ of disruption status.
 
 #### Avg Fare by Time of Day (Disruption vs Normal)
 
-[Avg Fare by Time of Day](assets/13_Avg_Fare_by_Time_of_Day.png) <br>
+![Avg Fare by Time of Day](assets/13_Avg_Fare_by_Time_of_Day.png) <br>
 
 A clustered bar chart comparing average fare, tip, and tip percentage across five time-of-day windows. Morning peak shows the largest fare gap; normal operations average $22.6 against $21.2 during disruptions, a $1.40 difference. Evening peak is the only window where disruption fares exceed normal ($20.4 vs $19.9), with tip percentage also marginally higher for disruptions (19.7% vs 19.6%). <br>
 
@@ -602,7 +572,7 @@ Off-peak hours carry the second highest tip percentages (17.3% normal, 17.0% dis
 
 #### Trips by Time of Day 
 
-[Trips by Time of Day](assets/14_Trips_by_Time_of_Day%20.png) <br>
+![Trips by Time of Day](assets/14_Trips_by_Time_of_Day.png) <br>
 
 A clustered bar chart across five demand windows. Off-peak hours dominate with 4,126,142 normal operations trips and 641,322 disruption trips, the largest volume in any single time window. Late night ranks second at 2,240,542 normal and 146,284 disruption trips.  <BR>
 
@@ -613,7 +583,7 @@ Morning peak generates the highest average fares ($22.6 normal, $21.2 disruption
 
 #### Monthly Trip Volume (Disruption vs Normal Days)
 
-[Monthly Trip Volume](assets/15_Monthly_Trip_Volume.png) <br>
+![Monthly Trip Volume](assets/15_Monthly_Trip_Volume.png) <br>
 
 A horizontal bar chart showing the three-month demand story. December 2025 generates the highest normal operations volume at 3,576,939 trips and $111.1M revenue at an average fare of $22.2; the Christmas period uplift is clearly visible. <br>
 
@@ -648,7 +618,7 @@ character from normal trips. They originate from the same zones, travel similar 
 
 <br>
 
-**MTA disruption correlation requires real historical data.** The synthetic MTA alerts produced no statistically meaningful difference in taxi demand volume or fare between disruption and non-disruption hours, consistent with the data being randomly distributed across hours rather than tied to actual service events. The pipeline architecture fully supports real historical GTFS data substitution when available. See ADR-005.
+**MTA disruption correlation requires real historical data.** The synthetic MTA alerts produced no statistically meaningful difference in taxi demand volume or fare between disruption and non-disruption hours, consistent with the data being randomly distributed across hours rather than tied to actual service events. The pipeline architecture fully supports real historical GTFS data substitution when available. See [ADR-005](docs/decisions.md).
 
 <br>
 
