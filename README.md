@@ -36,7 +36,7 @@ enabling meaningful demand pattern comparison within a single pipeline.
 
 ### Architecture
 
-![Architecture](assets/Architecture.png) <br>
+![Architecture](assets/16_architecture.png) <br>
 
 The platform implements a four-layer medallion architecture on Google Cloud. Each layer has a clearly defined contract; raw data is never modified, transformations happen exclusively in dbt, and the marts layer is the only layer that analysts and dashboards ever query directly. 
 
