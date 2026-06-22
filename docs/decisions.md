@@ -206,6 +206,7 @@ Treatment: dbt test configured to WARN severity for ongoing monitoring. <br>
 
 **Finding:** Power BI dashboard review revealed physically impossible records 
              surviving initial staging filters: <br>
+
              - 49,126 trips over 90 minutes duration
              - 3,925 trips over 40 miles distance
              - 38,157 trips with fare over $100
@@ -217,6 +218,7 @@ Treatment: dbt test configured to WARN severity for ongoing monitoring. <br>
                allowing GPS errors and meter malfunctions through. <br>
 
 **Decision:** Staging filters tightened to: <br>
+
              - trip_duration_minutes <= 90 (covers JFK runs, longest realistic trip)
              - trip_distance_miles <= 40 (covers all five boroughs and both airports)
              - fare_amount <= 150 (covers JFK flat rate and all legitimate metered fares) <br>
