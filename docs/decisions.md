@@ -2,9 +2,12 @@
 
 ### ADR-001: Python Version Downgrade
 **Date:** 2026 <br>
+
 **Decision:** Downgraded from Python 3.13 - Python 3.11.9 <br>
+
 **Reason:** Python 3.13 incompatible with core GCP packages (protobuf, dbt-bigquery).
             Python 3.11.x is the current production-stable version for data engineering. <br>
+
 **Trade-off:** No relevant Python 3.13 features lost for this project.
 
 <br>
@@ -12,9 +15,12 @@
 
 ### ADR-002: Apache Airflow Excluded from Local Environment
 **Date:** 2026 <br>
+
 **Decision:** Removed apache-airflow from requirements.txt. <br>
+
 **Reason:** Airflow has no native Windows support. Production orchestration
             targets Google Cloud Composer (managed Airflow on GCP). <br>
+
 **Trade-off:** DAGs cannot be tested locally; deployed directly to Composer. <br>
 
 <br>
@@ -22,8 +28,11 @@
 
 ### ADR-003: Exact Package Version Pinning
 **Date:** 2026 <br>
+
 **Decision:** All packages pinned to exact versions confirmed working together. <br>
+
 **Reason:** Protobuf conflicts between google-cloud packages require precise alignment. <br>
+
 **Confirmed versions:** <br>
 - google-cloud-storage==2.18.2
 - google-cloud-bigquery==3.25.0
@@ -36,9 +45,12 @@
 
 ### ADR-004: Binary-Only Package Installation
 **Date:** 2026 <br>
+
 **Decision:** All packages installed via `pip install --only-binary=:all:`. <br>
+
 **Reason:** Avoids C compiler dependency failures on Windows for packages
             like pyarrow and grpcio. <br>
+
 **Trade-off:** Negligible; all required packages have Windows wheels available.
 
 <br>
@@ -46,6 +58,7 @@
 
 ### ADR-005: MTA Synthetic Data Fallback
 **Date:** 2026 <br>
+
 **Decision:** MTA ingestion generates synthetic alert data when the live API
               is unavailable. <br>
 
@@ -65,6 +78,7 @@
 
 ### ADR-006: Resumable GCS Uploads with Exponential Backoff
 **Date:** 2026 <br>
+
 **Decision:** Switched to chunked resumable uploads (8MB chunks) with
               exponential backoff retry (max 5 attempts, 10-min deadline). <br>
 
@@ -81,6 +95,7 @@
 
 ### ADR-007: BigQuery and GCS Co-located in us-central1
 **Date:** 2026 <br>
+
 **Decision:** All BigQuery datasets and the GCS bucket created in us-central1. <br>
 
 **Reason:** BigQuery load jobs from GCS are free within the same region.
@@ -95,6 +110,7 @@
 
 ### ADR-008: Raw Table Loaded Without Explicit Partitioning
 **Date:** 2026 <br>
+
 **Decision:** yellow_taxi_raw loaded with schema auto-detected from Parquet.
               No partitioning applied at the raw layer. <br>
 
@@ -113,7 +129,8 @@
 <br>
 
 ### ADR-009: Corrupt Timestamp Handling in Raw TLC Data
-**Date:** 2026
+**Date:** 2026 <br>
+
 **Finding:** Raw yellow_taxi_raw contains trips with impossible timestamps; 
              3 trips dated 2008-2009 (vendor clock errors) and 22 trips
              outside the Nov 2025-Jan 2026 window (month boundary overflow). <br>
@@ -131,6 +148,7 @@
 
 ### ADR-010: Intermediate Models Write to Staging Dataset
 **Date:** 2026 <br>
+
 **Decision:** Intermediate models write to the staging BigQuery dataset
               rather than a dedicated intermediate dataset. <br>
 
@@ -146,6 +164,7 @@
 
 ### ADR-011: dim_location Demand Category is Static Classification
 **Date:** 2026 <br>
+
 **Decision:** demand_category uses TLC service zone definitions rather than
               measured trip volume from actual data. <br>
 
@@ -164,6 +183,7 @@
 
 ### ADR-012: Surrogate Key Strategy for fact_trips
 **Date:** 2026 <br>
+
 **Finding:** 564 duplicate trip records in source TLC data; all vendor_id=2
              (VeriFone) hardware-level duplicates where the meter recorded
              the same trip twice with identical field values. <br>
@@ -182,13 +202,11 @@
 ### ADR-013: Data Quality Observations — fact_trips
 **Date:** 2026 <br>
 
-**Finding 1 - Negative Adjustments (10,746 trips)** <br>
+**Finding 1: Negative Adjustments (10,746 trips)** <br>
 total_amount < fare_amount in 10,746 trips. These are legitimate TLC vendor
 adjustment records where dispute credits produce a lower total than the
 metered fare. Average gap: $3.98. Min total_amount: $0.00 (voided trips).
-Treatment: dbt test configured to WARN severity for ongoing monitoring. 
-
-<br>
+Treatment: dbt test configured to WARN severity for ongoing monitoring.  <br>
 
 **Finding 2: Impossible Speed Records (287 trips)** <br>
 287 trips show distances over 100 miles in under 30 minutes; GPS or meter
@@ -204,24 +222,21 @@ Treatment: dbt test configured to WARN severity for ongoing monitoring. <br>
 ### ADR-014: Outlier Filtering Tightened in stg_yellow_taxi
 **Date:** 2026 <br>
 
-**Finding:** Power BI dashboard review revealed physically impossible records 
-             surviving initial staging filters: <br>
-
-             - 49,126 trips over 90 minutes duration
-             - 3,925 trips over 40 miles distance
-             - 38,157 trips with fare over $100
-             - Total: 84,822 rows (0.76% of 11.17M trips)
-             - Symptom: avg_speed values of 272,000+ mph in dashboard <br>
+**Finding:** Power BI dashboard review revealed physically impossible records surviving initial staging filters: <br>
+- 49,126 trips over 90 minutes duration
+- 3,925 trips over 40 miles distance
+- 38,157 trips with fare over $100
+- Total: 84,822 rows (0.76% of 11.17M trips)
+- Symptom: avg_speed values of 272,000+ mph in dashboard <br>
 
 **Root Cause:** Initial upper bound of trip_duration_minutes < 300 was too
                permissive. No upper bounds existed for distance or fare,
                allowing GPS errors and meter malfunctions through. <br>
 
 **Decision:** Staging filters tightened to: <br>
-
-             - trip_duration_minutes <= 90 (covers JFK runs, longest realistic trip)
-             - trip_distance_miles <= 40 (covers all five boroughs and both airports)
-             - fare_amount <= 150 (covers JFK flat rate and all legitimate metered fares) <br>
+- trip_duration_minutes <= 90 (covers JFK runs, longest realistic trip)
+- trip_distance_miles <= 40 (covers all five boroughs and both airports)
+- fare_amount <= 150 (covers JFK flat rate and all legitimate metered fares) <br>
 
 **Fare distribution analysis confirming $150 cutoff:** <br>
              93.11% of trips under $50; consistent with NYC street hails
