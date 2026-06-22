@@ -73,8 +73,8 @@ Three sources were selected because they each answer a different dimension of th
 | Source            |  Provider          | Coverage            | Volume               | Format          |
 |-------------------|--------------------|---------------------|----------------------|-----------------|
 | Yellow Taxi Trips | NYC TLC | Nov 2025 - Jan 2026 | 11.17M trips | Monthly Parquet via CloudFront CDN |
-| Hourly Weather    | Open-Meteo Archive | Nov 2025 - Jan 2026 | 2,208 hourly records | JSON → Parquet  |
-| Subway Alerts     | MTA GTFS-RT        | Nov 2025 - Jan 2026 | 135 alert records    | JSON → Parquet  |
+| Hourly Weather    | Open-Meteo Archive | Nov 2025 - Jan 2026 | 2,208 hourly records | JSON - Parquet  |
+| Subway Alerts     | MTA GTFS-RT        | Nov 2025 - Jan 2026 | 135 alert records    | JSON - Parquet  |
 
 <br>
 
@@ -310,7 +310,7 @@ Fare distribution analysis confirming the $150 cutoff:
 | Under $50   | 10,401,110 | 93.11%          |
 | $50 - $100  | 731,470    | 6.55%           |
 | $100 - $150 | 29,220     | 0.26%           |
-| Over $150   | 8,937      | 0.08% — removed |
+| Over $150   | 8,937      | 0.08% removed   |
 
 <br>
 <br>
@@ -380,7 +380,7 @@ An alert running from hour 8 to hour 11 becomes four joinable rows; one for each
 
 <br>
 
-The marts layer implements a star schema. One central fact table holds all trip records. Three dimension tables hold slowly-changing reference data — zones, time attributes, and weather classifications. <br>
+The marts layer implements a star schema. One central fact table holds all trip records. Three dimension tables hold slowly-changing reference data; zones, time attributes, and weather classifications. <br>
 
 ![fct_trips details](assets/08_fact_trips_details.png) <br>
 
