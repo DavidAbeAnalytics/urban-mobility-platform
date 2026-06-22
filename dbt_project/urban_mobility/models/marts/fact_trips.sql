@@ -93,7 +93,7 @@ joined as (
     on trips.dropoff_location_id = dl.location_id
 
   left join time_dim t
-    on trips.pickup_datetime = t.datetime_hour
+    on timestamp_trunc(trips.pickup_datetime, hour) = t.datetime_hour  
 ),
 
 deduped as (

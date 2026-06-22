@@ -72,9 +72,11 @@ filtered as (
         pickup_datetime >= '2025-11-01'
         and pickup_datetime < '2026-02-01'
         and trip_duration_minutes > 0
-        and trip_duration_minutes < 300
+        and trip_duration_minutes <= 90 
         and trip_distance_miles > 0
+        and trip_distance_miles <= 40          -- max 40 miles for NYC trips
         and fare_amount > 0
+        and fare_amount <= 150                 -- remove extreme fare outliers
         and pickup_location_id is not null
         and dropoff_location_id is not null
 )
