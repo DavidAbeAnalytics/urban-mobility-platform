@@ -199,7 +199,7 @@
 <br>
 <br>
 
-### ADR-013: Data Quality Observations — fact_trips
+### ADR-013: Data Quality Observations - fact_trips
 **Date:** 2026 <br>
 
 **Finding 1: Negative Adjustments (10,746 trips)** <br>
