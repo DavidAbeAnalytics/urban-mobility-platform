@@ -67,11 +67,13 @@ The platform implements a four-layer medallion architecture on Google Cloud. Eac
 Three sources were selected because they each answer a different dimension of the core analytical question.
 - Trip data alone tells you volume. 
 - Weather data tells you conditions. 
-- MTA alerts tell you transit context. Only by joining all three at the zone-hour grain does the platform become capable of answering the core question. <br>
+- MTA alerts tell you transit context. Only by joining all three at the zone-hour grain does the platform become capable of answering the core question. 
+
+<br>
 
 
 | Source            |  Provider          | Coverage            | Volume               | Format          |
-|-------------------|--------------------|---------------------|----------------------|-----------------|
+|:------------------|:-------------------|:--------------------|:---------------------|:----------------|
 | Yellow Taxi Trips | NYC TLC | Nov 2025 - Jan 2026 | 11.17M trips | Monthly Parquet via CloudFront CDN |
 | Hourly Weather    | Open-Meteo Archive | Nov 2025 - Jan 2026 | 2,208 hourly records | JSON - Parquet  |
 | Subway Alerts     | MTA GTFS-RT        | Nov 2025 - Jan 2026 | 135 alert records    | JSON - Parquet  |
@@ -210,7 +212,11 @@ This is the GCP-recommended approach for files over 5MB in production pipelines.
 
 <br>
 
-Three raw tables mirror the GCS data lake exactly. Nothing is transformed at this layer; the raw dataset is a queryable copy of what arrived, preserved indefinitely. <br>
+Three raw tables mirror the GCS data lake exactly. Nothing is transformed at this layer; the raw dataset is a queryable copy of what arrived, preserved indefinitely. 
+
+<br>
+<br>
+
 
 ![bq_rowcount](assets/05_yellow_taxi_raw_rowcount.png) <br>
 
@@ -242,7 +248,10 @@ The dbt pipeline transforms raw data through three layers before it reaches anal
 
 ![Staging Models](assets/staging_clean_standardise.png) <br>
 
-The staging layer is the single point of truth for data cleaning. All type casting, column renaming, deduplication, and filtering happens here and nowhere else. Downstream models inherit clean data — they never repeat cleaning logic. <br>
+The staging layer is the single point of truth for data cleaning. All type casting, column renaming, deduplication, and filtering happens here and nowhere else. Downstream models inherit clean data — they never repeat cleaning logic. 
+
+<br>
+<br>
 
 #### a. stg_yellow_taxi
 The most complex staging model, it handles five concerns: <br>
@@ -306,7 +315,7 @@ filtered as (
 Fare distribution analysis confirming the $150 cutoff:
 
 | Fare Range  | Trips      | % of Total      |
-|-------------|------------|-----------------|
+|:------------|:-----------|:----------------|
 | Under $50   | 10,401,110 | 93.11%          |
 | $50 - $100  | 731,470    | 6.55%           |
 | $100 - $150 | 29,220     | 0.26%           |
@@ -342,12 +351,14 @@ Converts Unix epoch timestamps (stored as strings in the raw table) to human-rea
 <BR>
 
 ### Layer 2. Intermediate: Join and Aggregate
-![Intermediate Tables](assets/intermediate_bigquery.png) <br>
+![Intermediate Tables](assets/intermediate_bigquery.png) 
+
+<br>
 
 Four intermediate models join the three sources together and pre-compute the analytics that power the marts. <br>
 
 | Model                     | Input                               | Output    | Purpose           |
-|---------------------------|-------------------------------------|-----------|-------------------|
+|:--------------------------|:------------------------------------|:----------|:------------------|
 | `int_yellow_taxi_weather` | stg_yellow_taxi + stg_weather       |11.17M rows| Joins every trip to the weather at its pickup hour  |
 | `int_yellow_taxi_metrics` | int_yellow_taxi_weather             |11.17M rows| Adds duration/distance buckets, speed, tip percentage, peak hour flags |
 | `int_demand_zone_hour`    | int_yellow_taxi_metrics             | 357K rows | Aggregates trip demand to zone-hour grain |
@@ -355,7 +366,9 @@ Four intermediate models join the three sources together and pre-compute the ana
 
 <br>
 
-![Intermediate Models](assets/intermediate_models.png) <br>
+![Intermediate Models](assets/intermediate_models.png) 
+
+<br>
 
 The compression from 11.17M individual trip rows to 357K zone-hour summaries represents a **97% data reduction**. Every dashboard query runs against this pre-aggregated table; eliminating redundant full-table scans on every chart load. <br>
 
@@ -376,11 +389,12 @@ An alert running from hour 8 to hour 11 becomes four joinable rows; one for each
 
 ### Layer 3. Marts: Star Schema
 
-![marts](assets/07__bigquery_marts_datasets.png)
+![marts](assets/07__bigquery_marts_datasets.png) <br>
+
+The marts layer implements a star schema. One central fact table holds all trip records. Three dimension tables hold slowly-changing reference data; zones, time attributes, and weather classifications. 
 
 <br>
-
-The marts layer implements a star schema. One central fact table holds all trip records. Three dimension tables hold slowly-changing reference data; zones, time attributes, and weather classifications. <br>
+<br>
 
 ![fct_trips details](assets/08_fact_trips_details.png) <br>
 
@@ -435,7 +449,9 @@ A final `ROW_NUMBER()` deduplication pass in `fact_trips` itself handles the res
 
 ## Data Quality Framework
 
-![tests](assets/09_dbt_test_results.png) <br>
+![tests](assets/09_dbt_test_results.png) 
+
+<br>
 
 76 automated tests run across all pipeline layers on every execution: <br>
 
@@ -447,7 +463,7 @@ PASS=75   WARN=1   ERROR=0   SKIP=0   TOTAL=76
 <br>
 
 | Layer           | Tests | Coverage                                         |
-|-----------------|-------|--------------------------------------------------|
+|:----------------|:------|:-------------------------------------------------|
 | Sources (raw)   | 8     | Not-null and uniqueness on critical fields       |
 | Staging         | 23    | Schema validation, accepted values, uniqueness   |
 | Intermediate    | 14    | Business logic validation across joined models   |
@@ -493,7 +509,9 @@ The most significant data quality finding came not from automated tests but from
 
 ## CI/CD Pipeline
 
-![ci_passing](assets/10_github_actions_passing.png) <br>
+![ci_passing](assets/10_github_actions_passing.png) 
+
+<br>
 
 Every pull request to `main` triggers an automated dbt test suite via GitHub Actions. The workflow installs dbt, configures BigQuery credentials from repository secrets, and runs the full 76-test suite before any code can merge.  <br>
 
@@ -528,7 +546,10 @@ Branch protection on `main` enforces passing CI status before merge. The pipelin
 
 ![Dashboard Overview](assets/01_dashboard_overview.png) <br>
 
-The Power BI dashboard connects directly to `fact_trips` and `int_subway_impact` in BigQuery, with interactive slicers for month, disruption status, and weather severity allowing viewers to interrogate all three enrichment dimensions from a single page. <br>
+The Power BI dashboard connects directly to `fact_trips` and `int_subway_impact` in BigQuery, with interactive slicers for month, disruption status, and weather severity allowing viewers to interrogate all three enrichment dimensions from a single page. 
+
+<br>
+<br>
 
 
 #### Six headline metrics KPI
